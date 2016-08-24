@@ -1,0 +1,53 @@
+<head>
+  <title>Snake & Ladder</title>
+  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+  <div class="outer">
+    <div class="logo"></div>
+    <h1 class="title">Snake & Ladder</h1>
+    <div class="subtitle">Roll the dice to get 100 points</div>
+    {{> restart}}
+    {{> leaderboard}}
+  </div>
+
+
+</body>
+
+
+<template name="restart">
+  <div class=box>
+    <div class="details">
+      <button class="restart_button">Restart</button>
+    </div>
+  </div>
+</template>
+
+<template name="leaderboard">
+  <ol class="leaderboard">
+    {{#each players}}
+      {{> player}}
+    {{/each}}
+  </ol>
+  {{#if endedGame}}
+    <div class="message">Game Over</div>
+    {{else}}
+      {{#if selectedName}}
+        <div class="details">
+            <div class="name">{{selectedName}}</div>
+            <button class="inc">Roll the dice</button>
+        </div>
+      {{else}}
+        <div class="message">Click a name to play</div>
+      {{/if}}
+  {{/if}}
+</template>
+
+<template name="player">
+  <li class="player {{selected}}">
+    <span class="name">{{name}}</span>
+    <span class="score">{{score}}</span>
+  </li>
+</template>
