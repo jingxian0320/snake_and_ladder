@@ -5,7 +5,7 @@ Players = new Mongo.Collection("players");
 Snakes = new Mongo.Collection("Snakes");
 Ladders = new Mongo.Collection("Ladders");
 
-function add_score(prev_score) {
+function cal_score(prev_score) {
   var inc_score = Math.floor(Math.random() * 6 + 1)
   var set_score = prev_score + inc_score;
   if (set_score > 100){
@@ -36,6 +36,26 @@ function check_ladders(score){
   return set_score
 }
 
+function add_score(player_id){
+  var player = Players.findOne(player_id);
+  var prev_score = player.score;
+  var set_score = cal_score(prev_score);
+  set_score = check_snakes(set_score);
+  set_score = check_ladders(set_score);
+  Players.update(player_id, {$set: {score: set_score}});
+  if (set_score === 100){
+    Session.set("end", true)
+  }
+}
+
+function sleep(milliseconds) {
+  var start = new Date().getTime();
+  for (var i = 0; i < 1e7; i++) {
+    if ((new Date().getTime() - start) > milliseconds){
+      break;
+    }
+  }
+}
 
 if (Meteor.isClient) {
   Template.restart.events({
@@ -48,6 +68,7 @@ if (Meteor.isClient) {
       //Players.find().collection.update({}, {$set: {score: 0}}, {multi: true});
       Session.set("end",false);
       Session.set("selectedPlayer",false);
+      Session.set("playerTurn",false);
     }
   });
 
@@ -66,21 +87,21 @@ if (Meteor.isClient) {
 
   Template.leaderboard.events({
     'click .inc': function () {
-    var player = Players.findOne(Session.get("selectedPlayer"));
-    var prev_score = player.score;
-    var set_score = add_score(prev_score);
-    set_score = check_snakes(set_score);
-    set_score = check_ladders(set_score);
-    Players.update(Session.get("selectedPlayer"), {$set: {score: set_score}});
-    if (set_score === 100){
-      Session.set("end", true)
-    }
+      myPlayer = Session.get("selectedPlayer")
+      add_score(myPlayer)
+
+      var playerlist = Players.find({});
+      playerlist.forEach(function(player){
+        if (player._id !== Session.get("selectedPlayer")){
+          add_score(player._id);
+        }
+      })
     }
   });
 
   Template.player.helpers({
     selected: function () {
-      return Session.equals("selectedPlayer", this._id) ? "selected" : '';
+      return Session.equals("playerTurn", this._id) ? "selected" : '';
     }
   });
 
@@ -91,8 +112,21 @@ if (Meteor.isClient) {
         Session.set("selectedPlayer", this._id);
       }
 
+      var playerlist = Players.find({}, { sort: { name: 1 } }).fetch();
+      var flag = true
+      playerlist.forEach(function(player){
+        if (player._id === Session.get("selectedPlayer")){
+          Session.set("playerTurn",player._id)
+          flag = false;
+        }
+        if (flag){
+          Session.set("playerTurn",player._id);
+          sleep(1000);
+          add_score(player._id);
+        }
+      })
     }
-  });
+  })
 }
 
 // On server startup, create some players if the database is empty.
