@@ -35,10 +35,17 @@
     <div class="message">Game Over</div>
     {{else}}
       {{#if selectedName}}
-        <div class="details">
-            <div class="name">{{selectedName}}</div>
+        {{#if isSelectedTurn}}
+          <div class="details">
+            <div class="name">{{turnName}}</div>
             <button class="inc">Roll the dice</button>
-        </div>
+          </div>
+        {{else}}
+          <div class="details">
+            <div class="name">{{turnName}}</div>
+            <button class="inc">OK</button>
+          </div>
+        {{/if}}
       {{else}}
         <div class="message">Click a name to play</div>
       {{/if}}

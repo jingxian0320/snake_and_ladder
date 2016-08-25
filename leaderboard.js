@@ -42,20 +42,28 @@ function add_score(player_id){
   var set_score = cal_score(prev_score);
   set_score = check_snakes(set_score);
   set_score = check_ladders(set_score);
+  var duplicatePlayer = duplicates(set_score);
+  if (duplicatePlayer){
+    Players.update(duplicatePlayer,{$set: {score: 0}})
+  }
   Players.update(player_id, {$set: {score: set_score}});
   if (set_score === 100){
     Session.set("end", true)
   }
+  Players.update(player_id, {$set: {step: (set_score - prev_score)}});
 }
 
-function sleep(milliseconds) {
-  var start = new Date().getTime();
-  for (var i = 0; i < 1e7; i++) {
-    if ((new Date().getTime() - start) > milliseconds){
-      break;
+function duplicates(score){
+  var playerlist = Players.find({});
+  var prev_player = false;
+  playerlist.forEach(function(player){
+    if (score === player.score){
+      prev_player = player._id
     }
-  }
+  })
+  return prev_player
 }
+
 
 if (Meteor.isClient) {
   Template.restart.events({
@@ -80,13 +88,21 @@ if (Meteor.isClient) {
       var player = Players.findOne(Session.get("selectedPlayer"));
       return player && player.name;
     },
+    turnName: function () {
+      var player = Players.findOne(Session.get("playerTurn"));
+      return player && player.name;
+    },
     endedGame: function () {
       return Session.get("end");
+    },
+    isSelectedTurn: function(){
+      return (Session.get("playerTurn") === Session.get("selectedPlayer"))
     }
   });
 
   Template.leaderboard.events({
     'click .inc': function () {
+
       myPlayer = Session.get("selectedPlayer")
       add_score(myPlayer)
 
@@ -107,24 +123,25 @@ if (Meteor.isClient) {
 
   Template.player.events({
     'click': function () {
-      if (Session.get("selectedPlayer")){
-      }else{
-        Session.set("selectedPlayer", this._id);
-      }
 
-      var playerlist = Players.find({}, { sort: { name: 1 } }).fetch();
-      var flag = true
-      playerlist.forEach(function(player){
-        if (player._id === Session.get("selectedPlayer")){
-          Session.set("playerTurn",player._id)
-          flag = false;
+      if (Session.get("selectedPlayer")){
+      }
+      else{
+        Session.set("selectedPlayer", this._id);
+        var playerlist = Players.find({}, { sort: { name: 1 } });
+        var flag = true
+        playerlist.forEach(function(player){
+          if (player._id === Session.get("selectedPlayer")){
+            Session.set("playerTurn",player._id)
+            Session.set("end",false)
+            flag = false;
+          }
+          if (flag){
+            Session.set("playerTurn",player._id);
+            add_score(player._id);
+          }
         }
-        if (flag){
-          Session.set("playerTurn",player._id);
-          sleep(1000);
-          add_score(player._id);
-        }
-      })
+      )}
     }
   })
 }
