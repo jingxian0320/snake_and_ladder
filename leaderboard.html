@@ -32,7 +32,7 @@
     {{/each}}
   </ol>
   {{#if endedGame}}
-    <div class="message">Game Over</div>
+    <div class="message">{{endedGame}}</div>
     {{else}}
       {{#if selectedName}}
         {{#if isSelectedTurn}}
@@ -43,7 +43,7 @@
         {{else}}
           <div class="details">
             <div class="name">{{turnName}}</div>
-            <button class="inc">OK</button>
+            <button class="ok">{{message}}</button>
           </div>
         {{/if}}
       {{else}}
