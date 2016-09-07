@@ -48,11 +48,11 @@ function checkLadders(score){
 
 // check whether two players meet
 // the player who comes late will go back to 0
-function hasDuplicates(score){
+function hasDuplicates(name,score){
   var playerlist = Players.find({});
   var flag = false;
   playerlist.forEach(function(player){
-    if (score === player.score){
+    if (score === player.score && name !== player.name){
       if (score !== 0){
         flag = true;
       }
@@ -80,7 +80,7 @@ function calStep(player_id){
   if (after_ladder_score !== after_snake_score){
     log = log + ', met a ladder, climbed to ' + after_ladder_score.toString()
   }
-  if (hasDuplicates(after_ladder_score)){
+  if (hasDuplicates(player.name, after_ladder_score)){
     log = log + ', met another player, went back to 0'
     set_score = 0;
   }
