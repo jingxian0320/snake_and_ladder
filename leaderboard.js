@@ -6,15 +6,19 @@ Players = new Mongo.Collection("players");
 Snakes = new Mongo.Collection("Snakes");
 Ladders = new Mongo.Collection("Ladders");
 
+var time_interval = 500
+var var1, var2,var3,var4
+var timeout_var = [var1,var2,var3,var4]
+
 // function to generate score
 // the player will move backwards when the score exceed 100
 function calScore(prev_score) {
-  var inc_score = Math.floor(Math.random() * 6 + 1)
-  var set_score = prev_score + inc_score;
-  if (set_score > 100){
-    set_score = 200 - set_score
+  var rolled_score = Math.floor(Math.random() * 6 + 1)
+  var after_rolled_score = prev_score + rolled_score;
+  if (after_rolled_score > 100){
+    after_rolled_score = 200 - after_rolled_score
   }
-  return set_score
+  return [rolled_score,after_rolled_score]
 }
 
 // check if the player meets a snake
@@ -60,15 +64,33 @@ function hasDuplicates(score){
 // calculate step for player
 // the step size will be stored in database
 function calStep(player_id){
+  var log = ''
   var player = Players.findOne(player_id);
   var prev_score = player.score;
-  var set_score = calScore(prev_score);
-  set_score = checkSnakes(set_score);
-  set_score = checkLadders(set_score);
-
-  if (hasDuplicates(set_score)){
+  log = log + player.name + ' started at ' + prev_score.toString()
+  var rolled_score
+  var after_rolled_score
+  [rolled_score, after_rolled_score] = calScore(prev_score);
+  log = log + ', rolled a ' + rolled_score.toString() + ', moved to ' + after_rolled_score.toString()
+  after_snake_score = checkSnakes(after_rolled_score);
+  if (after_snake_score !== after_rolled_score){
+    log = log + ', met a snake, landed at ' + after_snake_score.toString()
+  }
+  after_ladder_score = checkLadders(after_snake_score);
+  if (after_ladder_score !== after_snake_score){
+    log = log + ', met a ladder, climbed to ' + after_ladder_score.toString()
+  }
+  if (hasDuplicates(after_ladder_score)){
+    log = log + ', met another player, went back to 0'
     set_score = 0;
   }
+  else{
+    set_score = after_ladder_score
+  }
+  log = log + '\n'
+  var prev_log = Session.get('log')
+  var new_log = log + prev_log
+  Session.set('log',new_log)
 
   var step_size = set_score - prev_score
   Players.update(player_id, {$set: {step: step_size}});
@@ -86,12 +108,34 @@ function findNext(player_id){
   else{
     return Players.findOne({}, { sort: { name: 1 } })._id;
   }
+}
 
+function calNextPlayerStep(){
+  var current_player_id = Session.get("playerTurn");
+  var next_player_id = findNext(current_player_id);
+  Session.set("playerTurn", next_player_id);
+  if (next_player_id !== Session.get("selectedPlayer")){
+    var step_size = calStep(next_player_id);
+    var set_score = step_size + Players.findOne(next_player_id).score
+    Players.update(next_player_id, {$inc: {score: step_size}});
 
+    if (set_score === 100){
+      Session.set("end", "Game Ends")
+      timeout_var.forEach(function(var_i){
+        clearTimeout(var_i)
+      })
+    }
+
+    return set_score
+  }
+  else{
+    return false
+  }
 }
 
 
 if (Meteor.isClient) {
+  Session.set('log','')
   Template.restart.events({
     'click .restart_button': function() {
       //Players.update({}, {$set: {score: 0}}, {multi: true});
@@ -105,6 +149,7 @@ if (Meteor.isClient) {
       Session.set("selectedPlayer",false);
       Session.set("playerTurn",false);
       Session.set("rolled",false);
+      Session.set("log",'')
     }
   });
 
@@ -124,17 +169,29 @@ if (Meteor.isClient) {
       return Session.get("end");
     },
     isSelectedTurn: function(){
-      if (Session.get("playerTurn") === Session.get("selectedPlayer") && Session.get("unrolled")){
+      if (Session.get("unrolled")){
         return true;
       }
       else{
         return false;
       }
     },
-
+    isSelected: function(){
+      if (Session.get("playerTurn") === Session.get("selectedPlayer")){
+        return true;
+      }
+      else{
+        return false;
+      }
+    },
     message: function(){
       var player = Players.findOne(Session.get("playerTurn"));
-      return "moves " + player.step.toString() + " steps";
+      return "moved " + player.step.toString() + " steps";
+    },
+
+    log: function(){
+      var log = Session.get('log')
+      return log
     }
   });
 
@@ -146,53 +203,38 @@ if (Meteor.isClient) {
       var my_player = Players.findOne(my_player_id);
 
       // calculate the stepsize and store it in databse
-      calStep(my_player_id);
+      step_size = calStep(my_player_id);
+      Players.update(my_player_id, {$inc: {score: step_size}});
       Session.set("unrolled",false);
     },
 
     // when clicking the 'moves X steps' buttion
     'click .ok': function () {
       var player_id = Session.get("playerTurn");
-      var player = Players.findOne(player_id);
-      var set_score = player.score + player.step
+      if (player_id === Session.get("selectedPlayer")){
+        var player = Players.findOne(player_id);
+        var set_score = player.score + player.step
 
-      // when the score reaches 100, end the game
-      if (set_score === 100){
-        Players.update(player_id, {$set: {score: 100}});
-        if (player_id === Session.get("selectedPlayer")){
+        // when the score reaches 100, end the game
+        if (set_score === 100){
           Session.set("end", "You Win!")
         }
+
+        // else: pass the turn to next 3 players
         else{
-          Session.set("end", "Game Over")
+          [0,1,2,3].forEach(function(i){
+            timeout_var[i] = setTimeout(calNextPlayerStep,i * time_interval)
+          })
+          Session.set("unrolled",true)
         }
       }
-
-      // else: increase the score by step size
-      else{
-        Players.update(player_id, {$inc: {score: player.step}});
-        var next_player_id = findNext(player_id);
-        Session.set("playerTurn", next_player_id);
-
-        // if next player is not the chosen player
-        // calculate the stepsize and store it in database
-        if (next_player_id !== Session.get("selectedPlayer")){
-          calStep(next_player_id);
-        }
-
-        // if next player is the chosen player,
-        // the player needs to roll the dice
-        else{
-          Session.set("unrolled",true);
-        }
-      }
-
 
     }
   });
 
   Template.player.helpers({
-    selected: function () {
-      return Session.equals("playerTurn", this._id) ? "selected" : '';
+    turn: function () {
+      return Session.equals("playerTurn", this._id) ? "turn" : '';
     }
   });
 
@@ -203,6 +245,7 @@ if (Meteor.isClient) {
       if (Session.get("selectedPlayer")){
       }
       else{
+
         Session.set("unrolled",true);
         Session.set("selectedPlayer", this._id);
         var playerlist = Players.find({}, { sort: { name: 1 } });

@@ -39,7 +39,7 @@ body {
 .subtitle {
   color: #999;
   font-size: .875em;
-  margin-bottom: 2em;
+  margin-bottom: 0em;
   text-align: center;
 }
 
@@ -96,7 +96,7 @@ body {
   padding-right: 1.25em;
 }
 
-.player.selected {
+.player.turn {
   background-color: #fefff4;
   border-left: #eb5f3a 4px solid;
 }
@@ -143,6 +143,47 @@ body {
   box-shadow: rgba(0,0,0,.3) 0 1px 3px 0 inset;
 }
 
+.details .ok {
+  border-radius: 3em;
+  border: #eb5f3a 1px solid;
+  background: transparent;
+  color: #eb5f3a;
+  cursor: pointer;
+  float: right;
+  font-family: 'Source Sans Pro' ,'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1;
+  margin: 0;
+  outline: none;
+  padding: 10px 30px;
+  transition: all 200ms ease-in;
+}
+
+.ok:hover {
+  background: #eb5f3a;
+  color: #fff;
+}
+
+.ok:active {
+  box-shadow: rgba(0,0,0,.3) 0 1px 3px 0 inset;
+}
+
+.details .info {
+  border-radius: 3em;
+  border: #34495E 1px solid;
+  background: transparent;
+  color: #34495E;
+  cursor: pointer;
+  float: right;
+  font-family: 'Source Sans Pro' ,'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1;
+  margin: 0;
+  outline: none;
+  padding: 10px 30px;
+  transition: all 200ms ease-in;
+}
+
 .details .restart_button {
   border-radius: 3em;
   border: #eb5f3a 1px solid;
@@ -168,35 +209,15 @@ body {
   box-shadow: rgba(0,0,0,.3) 0 1px 3px 0 inset;
 }
 
-.details .ok {
-  border-radius: 3em;
-  border: #84bf96 1px solid;
-  background: transparent;
-  color: #84bf96;
-  cursor: pointer;
-  float: right;
-  font-family: 'Source Sans Pro' ,'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 1rem;
-  line-height: 1;
-  margin: 0;
-  outline: none;
-  padding: 10px 30px;
-  transition: all 200ms ease-in;
-}
-
-.ok:hover {
-  background: #84bf96;
-  color: #fff;
-}
-
-.ok:active {
-  box-shadow: rgba(0,0,0,.3) 0 1px 3px 0 inset;
-}
-
 .message {
   color: #aaa;
   line-height: 2.25rem;
   text-align: center;
+}
+.step-details {
+  color: #aaa;
+  line-height: 2.25rem;
+  text-align: left;
 }
 .box {
   width: 40%;
@@ -228,6 +249,10 @@ body {
   }
 
   .details .inc {
+    padding: 10px 20px;
+  }
+
+  .details .ok {
     padding: 10px 20px;
   }
 

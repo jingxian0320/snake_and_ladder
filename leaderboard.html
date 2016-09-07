@@ -15,8 +15,6 @@
 
 
 </body>
-
-
 <template name="restart">
   <div class=box>
     <div class="details">
@@ -35,25 +33,33 @@
     <div class="message">{{endedGame}}</div>
     {{else}}
       {{#if selectedName}}
-        {{#if isSelectedTurn}}
-          <div class="details">
-            <div class="name">{{turnName}}</div>
-            <button class="inc">Roll the dice</button>
-          </div>
-        {{else}}
+        {{#if isSelected}}
+          {{#if isSelectedTurn}}
+            <div class="details">
+              <div class="name">{{turnName}}</div>
+              <button class="inc">Roll the dice</button>
+            </div>
+          {{else}}
           <div class="details">
             <div class="name">{{turnName}}</div>
             <button class="ok">{{message}}</button>
+          </div>
+          {{/if}}
+        {{else}}
+          <div class="details">
+            <div class="name">{{turnName}}</div>
+            <button class="info">{{message}}</button>
           </div>
         {{/if}}
       {{else}}
         <div class="message">Click a name to play</div>
       {{/if}}
   {{/if}}
+<div class="step-details"><pre>{{log}}</pre></div>
 </template>
 
 <template name="player">
-  <li class="player {{selected}}">
+  <li class="player {{turn}}">
     <span class="name">{{name}}</span>
     <span class="score">{{score}}</span>
   </li>
